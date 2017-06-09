@@ -5,6 +5,7 @@
 #include "vis.hpp"
 
 #include <iostream>
+#include <queue>
 #include <cmath>
 
 namespace cgal = CGAL;
@@ -19,10 +20,13 @@ public:
     Planner(const Polygon& domain): domain_(domain) {}
 
     virtual std::vector<Point> calc_tour() = 0;
-    virtual void vis(SvgFrame& frame) = 0;
+    virtual void vis(SvgFrame& frame) {
+        frame.add_tour(tour_);
+    }
 
 protected:
     Polygon domain_;
+    vector<Point> tour_;
 };
 
 class GridPlanner: public Planner
@@ -37,8 +41,7 @@ public:
     }
 
     void vis(SvgFrame& frame) override {
-        build_grid();
-        filter_grid();
+        Planner::vis(frame);
 
         frame.add_grid(grid_);
     }
@@ -80,24 +83,66 @@ protected:
         for (int i = 0; i < grid_.size(); i++) {
             for (int j = 0; j < i; j++) {
                 if (cgal::squared_distance(grid_[i], grid_[j]) == SQR(2 * VIS_RADIUS)) {
-                    graph.add_edge(i, j);
+                    graph.add_edge(i, j, 2 * VIS_RADIUS);
                 }
             }
         }
+
+        for (const auto& edges : graph_.adj()) {
+            assert(edges.size() <= 4);
+            assert(edges.size() > 0);
+        }
+
+        graph_ = graph;
     }
 
     std::vector<Point> grid_;
     Graph graph_;
 };
 
+class GreedyGridPlanner: public GridPlanner
+{
+};
+
 
 class MstGridPlanner: public GridPlanner
 {
 public:
+    MstGridPlanner(const Polygon& domain): GridPlanner(domain) {}
 
     std::vector<Point> calc_tour() override {
         build_grid();
+        filter_grid();
+        build_graph();
 
+        std::cerr << "Calculating tour" << std::endl;
+
+        std::vector<int> used(graph_.vertices().size());
+        std::priority_queue<std::pair<int, int>,
+            std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>> > d;
+
+        d.emplace(0, 0);
+
+        std::vector<Point> tour;
+        while (!d.empty()) {
+            auto dv = d.top();
+            d.pop();
+            if (used[dv.second]) {
+                continue;
+            }
+
+            tour.push_back(graph_.vertices()[dv.second]);
+            used[dv.second] = true;
+
+            for (auto e : graph_.adj(dv.second)) {
+                if (!used[e.v]) {
+                    d.emplace(e.weight, e.v);
+                }
+            }
+        }
+
+        std::cerr << "Tour finished" << std::endl;
+        return tour;
     }
 
 private:
