@@ -4,11 +4,30 @@
 #include <string>
 
 #include "geom.hpp"
+#include "graph.hpp"
 
 class SvgFrame
 {
 public:
     SvgFrame(int size, std::string filename): svg_out_(filename), mapper_(svg_out_, size, size) {}
+
+    void add_tour(const std::vector<Point>& tour) {
+        boost::geometry::model::linestring<Point> boost_poly(tour.begin(), tour.end());
+        mapper_.add(boost_poly);
+        mapper_.map(boost_poly, "opacity:1.0;fill:rgb(255,0,0);stroke:rgb(255,0,0);stroke-width:2");
+    }
+
+    void add_arc(const Graph& graph, int i, int j) {
+
+    }
+
+    void add_edge(const Graph& graph, int i, int j) {
+
+    }
+
+    void add_graph(const Graph& graph) {
+
+    }
 
     SvgFrame& add_domain(const Polygon& domain) {
         boost::geometry::model::ring<Point> boost_poly(domain.vertices_begin(), domain.vertices_end());

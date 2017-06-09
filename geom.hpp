@@ -33,12 +33,15 @@ struct Point: K::Point_2
 
 typedef CGAL::Polygon_2<K, std::vector<typename K::Point_2> > Polygon;
 
-typedef CGAL::Creator_uniform_2<int,Point> Creator;
+typedef K::Vector_2 Vector;
+typedef CGAL::Creator_uniform_2<int, Point> Creator;
 typedef CGAL::Random_points_in_square_2<Point, Creator> PointGenerator;
+typedef CGAL::Bbox_2 BoundBox;
+typedef K::Circle_2 Circle;
 
 BOOST_GEOMETRY_REGISTER_POINT_2D_GET_SET(Point, int, cs::cartesian, x, y, set_x, set_y);
 BOOST_GEOMETRY_REGISTER_MULTI_POINT(std::vector<Point>);
 
-typedef boost::geometry::model::polygon<Point> polygon_t;
+typedef boost::geometry::model::polygon<Point> BoostPolygon;
 
 Polygon random_poly(int point_count, int field_size, int seed = 0);
