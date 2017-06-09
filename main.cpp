@@ -1,45 +1,25 @@
+#include <iostream>
 #include <cassert>
+#include <fstream>
 #include <vector>
-#include <algorithm>
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/point_generators_2.h>
-#include <CGAL/algorithm.h>
+
+#include "vis.hpp"
+#include "geom.hpp"
+
 using namespace CGAL;
-typedef Simple_cartesian<int>         K;
-// typedef K::Point_2                    Point;
+using namespace std;
 
-struct Point: K::Point_2
+namespace bg = boost::geometry;
+
+int main(int argc, char** argv)
 {
-    Point(): K::Point_2() {}
-    Point(int x, int y): K::Point_2(x, y) {}
-    void set_x(int x) {
-        *this = Point(x, this->y());
-    }
-    void set_y(int y) {
-        *this = Point(this->x(), y);
-    }
-};
+    std::vector<Point> grid;
+    points_on_square_grid_2( 1000.0, 1000, std::back_inserter(grid),Creator());
 
-typedef Creator_uniform_2<int,Point>  Creator;
+    Polygon domain = random_poly(15, 1000, 777);
 
-int main() {
-    // Create test point set. Prepare a vector for 400 points.
-    std::vector<Point> points;
-    points.reserve(400);
-    // Create 250 points from a 16 x 16 grid. Note that the double
-    // arithmetic _is_ sufficient to produce exact integer grid points.
-    // The distance between neighbors is 34 pixel = 510 / 15.
-    points_on_square_grid_2( 255.0, 250, std::back_inserter(points),Creator());
-    // Lower, left corner.
-    assert( points[0].x() == -255);
-    assert( points[0].y() == -255);
-    // Upper, right corner. Note that 6 points are missing to fill the grid.
-    assert( points[249].x() == 255 - 6 * 34);
-    assert( points[249].y() == 255);
-    // Create 250 points within a disc of radius 150.
-    Random_points_in_disc_2<Point,Creator> g( 150.0);
-    CGAL::cpp11::copy_n( g, 250, std::back_inserter(points));
-    // Check that we have really created 500 points.
-    assert( points.size() == 500);
+    SvgFrame output(1000, "output.svg");
+    output.add_grid(grid).add_domain(domain);
+
     return 0;
 }
