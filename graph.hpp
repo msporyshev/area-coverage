@@ -2,11 +2,22 @@
 
 #include "geom.hpp"
 
+#include <tuple>
+
 struct Edge {
-    int v;
+    int from;
+    int to;
     int weight;
 
-    Edge(int v, int w): v(v), weight(w) {}
+    Edge(int from, int to, int w): from(from), to(to), weight(w) {}
+
+    bool operator<(const Edge& other) const {
+        return std::tie(weight, from, to) < std::tie(other.weight, other.from, other.to);
+    }
+
+    bool operator>(const Edge& other) const {
+        return std::tie(weight, from, to) > std::tie(other.weight, other.from, other.to);
+    }
 };
 
 class Graph
@@ -25,7 +36,7 @@ public:
     }
 
     void add_arc(int i, int j, int w) {
-        adj_.at(i).emplace_back(j, w);
+        adj_.at(i).emplace_back(i, j, w);
     }
 
     void add_edge(int i, int j, int w) {

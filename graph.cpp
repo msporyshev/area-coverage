@@ -38,12 +38,12 @@ const std::vector<double>& BfsSearcher::calc_distances() {
         int from = q.front();
         q.pop();
 
-        for (auto to : adj_list[from]) {
+        for (auto e : adj_list[from]) {
 
-            if (distances_[to.v] < 0) {
-                prev_[to.v] = from;
-                distances_[to.v] = distances_[from] + 1;
-                q.push(to.v);
+            if (distances_[e.to] < 0) {
+                prev_[e.to] = from;
+                distances_[e.to] = distances_[from] + 1;
+                q.push(e.to);
             }
         }
     }

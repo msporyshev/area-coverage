@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#include <tuple>
 #include <queue>
 
 using std::vector;
@@ -37,6 +38,27 @@ vector<Point> build_bounding_grid(const Polygon& domain, double radius) {
 
     return grid;
 }
+
+
+Graph build_4c_grid_graph(const vector<Point>& vertices, int dist) {
+    Graph graph(vertices);
+
+    for (int i = 0; i < vertices.size(); i++) {
+        for (int j = 0; j < i; j++) {
+            if (cgal::squared_distance(vertices[i], vertices[j]) == SQR(dist)) {
+                graph.add_edge(i, j, dist);
+            }
+        }
+    }
+
+    for (const auto& edges : graph.adj()) {
+        assert(edges.size() <= 4);
+        assert(edges.size() > 0);
+    }
+
+    return graph;
+}
+
 
 } // namespace
 
@@ -118,39 +140,44 @@ const std::vector<Point>& MstGridPlanner::calc_tour() {
 
     int d = 2 * VIS_RADIUS;
     int count = ceil(std::max(box.xmax() - box.xmin(), box.ymax() - box.ymin()) / d);
-    grid_ = gen_sq_grid(Point(box.xmin(), box.ymin()), d, count);
+    // grid_ = gen_sq_grid(Point(box.xmin(), box.ymin()), d, count);
 
     x2grid_ = gen_sq_grid(Point(box.xmin() + VIS_RADIUS, box.ymin() + VIS_RADIUS), 2 * d, count / 2);
     x2grid_ = filter_grid(domain_, d, x2grid_);
 
 
     // filter_grid();
-    build_graph();
+    graph_ = build_4c_grid_graph(grid_, d);
 
+    x2graph_ = build_4c_grid_graph(x2grid_, 2 * d);
 
-    // std::vector<int> used(graph_.vertices().size());
-    // std::priority_queue<std::pair<int, int>,
-    //     std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>> > d;
+    std::vector<int> used(x2graph_.vertices().size());
+    std::priority_queue<Edge,
+        std::vector<Edge>, std::greater<Edge> > dists;
 
-    // d.emplace(0, 0);
+    dists.emplace(-1, 0, 0);
 
-    // std::vector<Point> tour;
-    // while (!d.empty()) {
-    //     auto dv = d.top();
-    //     d.pop();
-    //     if (used[dv.second]) {
-    //         continue;
-    //     }
+    std::vector<Point> tour;
+    while (!dists.empty()) {
+        auto cur_edge = dists.top();
+        dists.pop();
+        if (used[cur_edge.to]) {
+            continue;
+        }
 
-    //     tour.push_back(graph_.vertices()[dv.second]);
-    //     used[dv.second] = true;
+        // tour.push_back(x2graph_.vertices()[cur_edge.second]);
+        if (cur_edge.to != 0) {
+            edges_.push_back(cur_edge);
+        }
 
-    //     for (auto e : graph_.adj(dv.second)) {
-    //         if (!used[e.v]) {
-    //             d.emplace(e.weight, e.v);
-    //         }
-    //     }
-    // }
+        used[cur_edge.to] = true;
+
+        for (auto e : x2graph_.adj(cur_edge.to)) {
+            if (!used[e.to]) {
+                dists.push(e);
+            }
+        }
+    }
 
     // tour_ = tour;
     return tour_;

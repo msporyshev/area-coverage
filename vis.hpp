@@ -22,7 +22,10 @@ public:
     }
 
     void add_edge(const Graph& graph, int i, int j) {
+        boost::geometry::model::segment<Point> segment(graph.vertices()[i], graph.vertices()[j]);
 
+        mapper_.add(segment);
+        mapper_.map(segment, "fill-opacity:0.3;fill:rgb(51,51,153);stroke:rgb(51,51,153);stroke-width:2");
     }
 
     void add_graph(const Graph& graph) {
