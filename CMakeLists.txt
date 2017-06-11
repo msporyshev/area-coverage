@@ -36,6 +36,6 @@ include_directories(
   )
 
 
-add_executable(main main.cpp geom.cpp)
+add_executable(main main.cpp geom.cpp planner.cpp graph.cpp)
 target_link_libraries(main ${CGAL_LIBRARIES} ${Boost_LIBRARIES})
 
