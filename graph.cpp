@@ -7,17 +7,20 @@
 using std::vector;
 using std::queue;
 
-vector<Point> StartVertexSearcher::get_tour_to(int v) {
+vector<int> StartVertexSearcher::get_tour_to(int v) {
     vector<int> tour;
+    tour.push_back(v);
     int cur = v;
+
     while (prev_[cur] != sv_) {
-        tour.push_back(cur);
+        assert(prev_[cur] != -1);
+        tour.push_back(prev_[cur]);
         cur = prev_[cur];
     }
 
     std::reverse(tour.begin(), tour.end());
 
-    return graph_.get_2d_tour(tour);
+    return tour;
 }
 
 const std::vector<double>& BfsSearcher::calc_distances() {
@@ -25,6 +28,7 @@ const std::vector<double>& BfsSearcher::calc_distances() {
     queue<int> q;
 
     q.push(sv_);
+
     distances_.assign(adj_list.size(), -1.0);
     prev_.assign(adj_list.size(), -1);
     distances_[sv_] = 0;
@@ -35,7 +39,8 @@ const std::vector<double>& BfsSearcher::calc_distances() {
         q.pop();
 
         for (auto to : adj_list[from]) {
-            if (distances_[to.v] != -1.0) {
+
+            if (distances_[to.v] < 0) {
                 prev_[to.v] = from;
                 distances_[to.v] = distances_[from] + 1;
                 q.push(to.v);

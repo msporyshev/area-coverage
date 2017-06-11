@@ -19,8 +19,11 @@ class Planner
 public:
     Planner(const Polygon& domain): domain_(domain) {}
 
-    virtual std::vector<Point> calc_tour() = 0;
+    virtual const std::vector<Point>& calc_tour() = 0;
     virtual void vis(SvgFrame& frame) {
+        assert(tour_.size() > 1);
+
+        frame.add_start_point(tour_[0]);
         frame.add_tour(tour_);
     }
 
@@ -34,7 +37,7 @@ class GridPlanner: public Planner
 public:
     GridPlanner(const Polygon& domain): Planner(domain) {}
 
-    std::vector<Point> calc_tour() override {
+    const std::vector<Point>& calc_tour() override {
         build_grid();
         filter_grid();
         return grid_;
@@ -61,7 +64,9 @@ protected:
 class GreedyGridPlanner: public GridPlanner
 {
 public:
-    std::vector<Point> calc_tour() override;
+    GreedyGridPlanner(const Polygon& domain): GridPlanner(domain) {}
+
+    const std::vector<Point>& calc_tour() override;
 };
 
 
@@ -70,7 +75,7 @@ class MstGridPlanner: public GridPlanner
 public:
     MstGridPlanner(const Polygon& domain): GridPlanner(domain) {}
 
-    std::vector<Point> calc_tour() override;
+    const std::vector<Point>& calc_tour() override;
 
 private:
 

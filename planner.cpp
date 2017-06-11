@@ -28,8 +28,6 @@ void GridPlanner::build_grid() {
     int d = 2 * VIS_RADIUS;
     int count = (radius + d - 1) / d;
 
-    std::cerr << radius << " " << count << std::endl;
-
     std::vector<Point> raw_grid;
     cgal::points_on_square_grid_2(count * d, SQR(2 * count + 1), std::back_inserter(grid_),Creator());
 }
@@ -53,21 +51,47 @@ void GridPlanner::build_graph() {
     graph_ = graph;
 }
 
-std::vector<Point> GreedyGridPlanner::calc_tour() {
+const std::vector<Point>& GreedyGridPlanner::calc_tour() {
     build_grid();
     filter_grid();
     build_graph();
 
-    std::vector<Point> res;
+    std::vector<int> tour;
+    tour.push_back(0);
+    int vcount = graph_.vertices().size();
 
+    std::vector<int> used(vcount);
+    used[0] = true;
+
+    for (int i = 0; i < vcount - 1; i++) {
+        BfsSearcher searcher(graph_, tour.back());
+        std::vector<double> distances = searcher.calc_distances();
+
+        double mind = 1e9;
+        int v = -1;
+        for (int i = 0; i < vcount; i++) {
+            if (!used[i] && mind > distances[i]) {
+                mind = distances[i];
+                v = i;
+            }
+        }
+
+        used[v] = true;
+
+        auto tour_to_v = searcher.get_tour_to(v);
+
+        std::copy(tour_to_v.begin(), tour_to_v.end(), std::back_inserter(tour));
+    }
+
+    tour_ = graph_.get_2d_tour(tour);
+    return tour_;
 }
 
-std::vector<Point> MstGridPlanner::calc_tour() {
+const std::vector<Point>& MstGridPlanner::calc_tour() {
     build_grid();
     filter_grid();
     build_graph();
 
-    std::cerr << "Calculating tour" << std::endl;
 
     std::vector<int> used(graph_.vertices().size());
     std::priority_queue<std::pair<int, int>,
@@ -93,6 +117,6 @@ std::vector<Point> MstGridPlanner::calc_tour() {
         }
     }
 
-    std::cerr << "Tour finished" << std::endl;
-    return tour;
+    tour_ = tour;
+    return tour_;
 }

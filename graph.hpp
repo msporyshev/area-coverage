@@ -83,7 +83,7 @@ public:
 
     const std::vector<double>& get_distances() { return distances_; }
 
-    virtual std::vector<Point> get_tour_to(int v);
+    virtual std::vector<int> get_tour_to(int v);
 protected:
     int sv_;
     std::vector<int> prev_;

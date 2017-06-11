@@ -29,6 +29,13 @@ public:
 
     }
 
+    SvgFrame& add_start_point(const Point& sp) {
+        mapper_.add(sp);
+        mapper_.map(sp, "opacity:1.0;fill:rgb(0,255,0);stroke:rgb(255,0,0);stroke-width:5", 10);
+
+        return *this;
+    }
+
     SvgFrame& add_domain(const Polygon& domain) {
         boost::geometry::model::ring<Point> boost_poly(domain.vertices_begin(), domain.vertices_end());
 
