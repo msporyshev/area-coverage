@@ -37,11 +37,7 @@ class GridPlanner: public Planner
 public:
     GridPlanner(const Polygon& domain): Planner(domain) {}
 
-    const std::vector<Point>& calc_tour() override {
-        build_grid();
-        filter_grid();
-        return grid_;
-    }
+    const std::vector<Point>& calc_tour() override = 0;
 
     void vis(SvgFrame& frame) override {
         Planner::vis(frame);
@@ -51,9 +47,9 @@ public:
 
 protected:
 
-    void filter_grid();
+    // void filter_grid();
 
-    void build_grid();
+    // void build_grid();
 
     void build_graph();
 
@@ -77,6 +73,13 @@ public:
 
     const std::vector<Point>& calc_tour() override;
 
-private:
+    void vis(SvgFrame& frame) override {
+        // Planner::vis(frame);
 
+        frame.add_grid(grid_);
+        frame.add_grid(x2grid_);
+    }
+
+protected:
+    std::vector<Point> x2grid_;
 };

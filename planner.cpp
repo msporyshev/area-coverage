@@ -1,36 +1,61 @@
 #include "planner.hpp"
 #include "graph.hpp"
+#include "gen.hpp"
 
 #include <iostream>
+#include <vector>
 #include <queue>
 
-void GridPlanner::filter_grid() {
+using std::vector;
+
+namespace {
+
+vector<Point> filter_grid(const Polygon& domain_, double dist, const vector<Point>& grid_) {
     boost::geometry::model::linestring<Point> boost_poly(domain_.vertices_begin(), domain_.vertices_end());
     boost_poly.push_back(*boost_poly.begin());
 
     std::vector<Point> vertices;
     for (auto& p : grid_) {
-        if (boost::geometry::distance(p, boost_poly) <= VIS_RADIUS * sqrt(2.0) ||
+        if (boost::geometry::distance(p, boost_poly) <= dist ||
             domain_.bounded_side(p) == cgal::ON_BOUNDED_SIDE)
         {
             vertices.push_back(p);
         }
     }
 
-    grid_ = vertices;
+    return vertices;
 }
 
+vector<Point> build_bounding_grid(const Polygon& domain, double radius) {
+    BoundBox box = domain.bbox();
 
-void GridPlanner::build_grid() {
-    BoundBox box = domain_.bbox();
+    int d = 2 * radius;
+    int count = ceil(std::max(box.xmax() - box.xmin(), box.ymax() - box.ymin()) / d);
+    auto grid = gen_sq_grid(Point(box.xmin(), box.ymin()), d, count);
 
-    int radius = ceil(std::max(box.xmax() - box.xmin(), box.ymax() - box.ymin()));
-    int d = 2 * VIS_RADIUS;
-    int count = (radius + d - 1) / d;
+    grid = filter_grid(domain, radius * sqrt(2.0), grid);
 
-    std::vector<Point> raw_grid;
-    cgal::points_on_square_grid_2(count * d, SQR(2 * count + 1), std::back_inserter(grid_),Creator());
+    return grid;
 }
+
+} // namespace
+
+// void GridPlanner::filter_grid() {
+//     boost::geometry::model::linestring<Point> boost_poly(domain_.vertices_begin(), domain_.vertices_end());
+//     boost_poly.push_back(*boost_poly.begin());
+
+//     std::vector<Point> vertices;
+//     for (auto& p : grid_) {
+//         if (boost::geometry::distance(p, boost_poly) <= VIS_RADIUS * sqrt(2.0) ||
+//             domain_.bounded_side(p) == cgal::ON_BOUNDED_SIDE)
+//         {
+//             vertices.push_back(p);
+//         }
+//     }
+
+    // grid_ = vertices;
+// }
+
 
 void GridPlanner::build_graph() {
     Graph graph(grid_);
@@ -52,8 +77,7 @@ void GridPlanner::build_graph() {
 }
 
 const std::vector<Point>& GreedyGridPlanner::calc_tour() {
-    build_grid();
-    filter_grid();
+    grid_ = build_bounding_grid(domain_, VIS_RADIUS);
     build_graph();
 
     std::vector<int> tour;
@@ -88,35 +112,46 @@ const std::vector<Point>& GreedyGridPlanner::calc_tour() {
 }
 
 const std::vector<Point>& MstGridPlanner::calc_tour() {
-    build_grid();
-    filter_grid();
+    grid_ = build_bounding_grid(domain_, VIS_RADIUS);
+
+    BoundBox box = domain_.bbox();
+
+    int d = 2 * VIS_RADIUS;
+    int count = ceil(std::max(box.xmax() - box.xmin(), box.ymax() - box.ymin()) / d);
+    grid_ = gen_sq_grid(Point(box.xmin(), box.ymin()), d, count);
+
+    x2grid_ = gen_sq_grid(Point(box.xmin() + VIS_RADIUS, box.ymin() + VIS_RADIUS), 2 * d, count / 2);
+    x2grid_ = filter_grid(domain_, d, x2grid_);
+
+
+    // filter_grid();
     build_graph();
 
 
-    std::vector<int> used(graph_.vertices().size());
-    std::priority_queue<std::pair<int, int>,
-        std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>> > d;
+    // std::vector<int> used(graph_.vertices().size());
+    // std::priority_queue<std::pair<int, int>,
+    //     std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>> > d;
 
-    d.emplace(0, 0);
+    // d.emplace(0, 0);
 
-    std::vector<Point> tour;
-    while (!d.empty()) {
-        auto dv = d.top();
-        d.pop();
-        if (used[dv.second]) {
-            continue;
-        }
+    // std::vector<Point> tour;
+    // while (!d.empty()) {
+    //     auto dv = d.top();
+    //     d.pop();
+    //     if (used[dv.second]) {
+    //         continue;
+    //     }
 
-        tour.push_back(graph_.vertices()[dv.second]);
-        used[dv.second] = true;
+    //     tour.push_back(graph_.vertices()[dv.second]);
+    //     used[dv.second] = true;
 
-        for (auto e : graph_.adj(dv.second)) {
-            if (!used[e.v]) {
-                d.emplace(e.weight, e.v);
-            }
-        }
-    }
+    //     for (auto e : graph_.adj(dv.second)) {
+    //         if (!used[e.v]) {
+    //             d.emplace(e.weight, e.v);
+    //         }
+    //     }
+    // }
 
-    tour_ = tour;
+    // tour_ = tour;
     return tour_;
 }

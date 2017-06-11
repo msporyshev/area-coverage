@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 
     Polygon domain = random_poly(15, 900, 777);
 
-    GreedyGridPlanner planner(domain);
+    MstGridPlanner planner(domain);
 
 
     // for (auto it = domain.vertices_begin(); it != domain.vertices_end(); ++it) {
