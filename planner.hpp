@@ -74,17 +74,13 @@ public:
     const std::vector<Point>& calc_tour() override;
 
     void vis(SvgFrame& frame) override {
-        // Planner::vis(frame);
+        Planner::vis(frame);
 
         frame.add_grid(grid_);
-        frame.add_grid(x2grid_);
-        for (auto& e : edges_) {
-            frame.add_edge(x2graph_, e.from, e.to);
-        }
     }
 
 protected:
     std::vector<Point> x2grid_;
     Graph x2graph_;
-    std::vector<Edge> edges_;
+    Graph mst_;
 };
