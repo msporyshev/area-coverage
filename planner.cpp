@@ -69,23 +69,6 @@ Graph build_4c_grid_graph(const vector<Point>& vertices, int dist) {
 
 } // namespace
 
-// void GridPlanner::filter_grid() {
-//     boost::geometry::model::linestring<Point> boost_poly(domain_.vertices_begin(), domain_.vertices_end());
-//     boost_poly.push_back(*boost_poly.begin());
-
-//     std::vector<Point> vertices;
-//     for (auto& p : grid_) {
-//         if (boost::geometry::distance(p, boost_poly) <= VIS_RADIUS * sqrt(2.0) ||
-//             domain_.bounded_side(p) == cgal::ON_BOUNDED_SIDE)
-//         {
-//             vertices.push_back(p);
-//         }
-//     }
-
-    // grid_ = vertices;
-// }
-
-
 void GridPlanner::build_graph() {
     Graph graph(grid_);
 
@@ -171,7 +154,6 @@ static std::vector<int> get_tour(const Graph& one_cycle_graph) {
             }
         }
         used[v] = true;
-        // v = one_cycle_graph.adj(v)[0];
     } while (v != sv);
 
     tour.push_back(sv);
@@ -192,7 +174,6 @@ const std::vector<Point>& MstGridPlanner::calc_tour() {
     x2grid_ = filter_grid(domain_, d / 2, x2grid_);
 
 
-    // filter_grid();
     graph_ = build_4c_grid_graph(grid_, d);
 
     x2graph_ = build_4c_grid_graph(x2grid_, 2 * d);
@@ -226,7 +207,6 @@ const std::vector<Point>& MstGridPlanner::calc_tour() {
             continue;
         }
 
-        // tour.push_back(x2graph_.vertices()[cur_edge.second]);
         if (cur_edge.to != 0) {
             mst_.add_edge(cur_edge);
 
@@ -234,7 +214,6 @@ const std::vector<Point>& MstGridPlanner::calc_tour() {
             Point b = mst_.vertices()[cur_edge.to];
 
             Point p((a.x() + b.x()) / 2, (a.y() + b.y()) / 2);
-            // add_vert_edges(p, sq_grid, euler_graph, vr);
             if (a.x() == b.x()) {
                 add_shift_edge(p, sq_grid, left, euler_graph);
                 add_shift_edge(p, sq_grid, right, euler_graph);
@@ -260,10 +239,7 @@ const std::vector<Point>& MstGridPlanner::calc_tour() {
         {{0, -1}, down}
     };
 
-
-
     for (int i = 0; i < mst_.vertices().size(); i++) {
-
         set<Pair<int>> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
         for (auto& edge : mst_.adj(i)) {
             Point a = mst_.vertices()[edge.from];
@@ -278,10 +254,13 @@ const std::vector<Point>& MstGridPlanner::calc_tour() {
         }
     }
 
-    DebugFrame("euler_graph") << domain_ << grid_ << euler_graph << mst_;
-    DebugFrame("euler_tour") << domain_ << euler_graph;
-
     auto vertex_tour = get_tour(euler_graph);
     tour_ = euler_graph.get_2d_tour(vertex_tour);
+
+    QuadTree qtree(domain_, d, 2);
+    DebugFrame("euler_graph") << domain_ << grid_ << euler_graph << mst_;
+    DebugFrame("euler_tour") << domain_ << euler_graph;
+    (DebugFrame("qtree_tour") << domain_ << qtree << qtree.grid()).add_tour(tour_);
+
     return tour_;
 }

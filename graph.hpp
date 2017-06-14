@@ -55,6 +55,18 @@ public:
         return grid_;
     }
 
+    const Point& tl() const {
+        return tl_;
+    }
+
+    double dist() const {
+        return dist_;
+    }
+
+    int axis_count() const {
+        return axis_count_;
+    }
+
 private:
 
     Point tl_;

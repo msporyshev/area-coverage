@@ -2,6 +2,7 @@
 
 #include "geom.hpp"
 #include "graph.hpp"
+#include "qtree.hpp"
 #include "vis.hpp"
 
 #include <iostream>

@@ -4,6 +4,7 @@
 #include <string>
 
 #include "geom.hpp"
+#include "qtree.hpp"
 #include "graph.hpp"
 
 class SvgFrame
@@ -71,6 +72,44 @@ public:
         mapper_.map(grid, "opacity:1.0;fill:rgb(255,0,0);stroke:rgb(255,0,0);stroke-width:5", 1);
 
         return *this;
+    }
+
+    SvgFrame& add_qtree_node(const QTreeNode& node) {
+        int shift = (node.count_ / 2) * node.dist_;
+
+        Point center = node.tl_ + Vector{1, 1} * shift;
+
+
+        boost::geometry::model::segment<Point> hseg(center + Vector{-1, 0} * shift, center + Vector{1, 0} * shift);
+        boost::geometry::model::segment<Point> vseg(center + Vector{0, -1} * shift, center + Vector{0, 1} * shift);
+
+        mapper_.add(hseg);
+        mapper_.add(vseg);
+        mapper_.map(hseg, "fill-opacity:0.3;fill:rgb(51,51,153);stroke:rgb(51,51,153);stroke-width:2");
+        mapper_.map(vseg, "fill-opacity:0.3;fill:rgb(51,51,153);stroke:rgb(51,51,153);stroke-width:2");
+        return *this;
+    }
+
+    SvgFrame& add_qtree(const QTreeNode& qtree) {
+        add_qtree_node(qtree);
+        for (auto& node : qtree.children_) {
+            add_qtree(node);
+        }
+
+        return *this;
+    }
+
+
+    SvgFrame& add_qtree(const QuadTree& qtree) {
+        return add_qtree(qtree.root());
+    }
+
+    SvgFrame& add(const QuadTree& qtree) {
+        return add_qtree(qtree);
+    }
+
+    SvgFrame& add(const QTreeNode& node) {
+        return add_qtree_node(node);
     }
 
     SvgFrame& add(const Graph& graph) {
